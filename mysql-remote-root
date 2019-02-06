@@ -1,0 +1,69 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          mysql-remote-root-daemon
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start mysql-remote-root-daemon at boot time
+# Description:       Enable service provided by mysql-remote-root-daemon.
+# Criando inicializadores para MySQL remote ROOT
+# update-rc.d  mysql-remote-root-daemon defaults 
+#
+### END INIT INFO
+ 
+typeset -x PID=$(pgrep mysql-remote)
+LOCK=/tmp/mysql-remote-root-daemon.lock
+
+do_start() {
+        if [ -f /tmp/mysql-remote-root-daemon.lock ]
+        then
+                /opt/mysql-remote-root/mysql-remote-root-daemon &
+                sleep 0.3
+        else
+                /opt/mysql-remote-root/mysql-remote-root-daemon &
+                sleep 0.3
+                echo "Iniciando o mysql-remote-root-daemon: Processo: $PID"
+        fi
+}
+ 
+do_stop() {
+        kill -15 $PID 2>/dev/null &
+        rm $LOCK 2>/dev/null &
+        echo "Parando o mysql-remote-root-daemon"
+}
+ 
+do_restart() {
+        if [ -f /tmp/mysql-remote-root-daemon.lock ]
+        then
+                kill -15 $PID 2>/dev/null &
+                echo "Reiniciando o mysql-remote-root-daemon: Processo: $PID"
+                sleep 1
+                /opt/mysql-remote-root/mysql-remote-root-daemon &
+        else
+                do_start
+        fi
+}
+ 
+case "$1" in
+        start)
+                do_start
+                ;;
+        stop)
+                do_stop
+                ;;
+        restart)
+                do_restart
+                ;;
+        status)
+                if [ -f /tmp/mysql-remote-root-daemon.lock ]
+                then
+                        echo "o mysql-remote-root-daemon está rodando com sucesso"
+                else
+                        echo "o mysql-remote-root-daemon está parado"
+                fi
+                ;;
+        *)
+                echo "*Modo de uso: /etc/init.d/mysql-remote-root (start|stop|restart|status)"
+                ;;
+esac
